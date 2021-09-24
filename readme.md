@@ -11,6 +11,6 @@ This project requires Python 3.6+; if you have Py2 ([which you shouldn't](https:
 ```
 git clone https://github.com/synackable/ZipZap.git
 cd ZipZap/
-python -m pip install -r requirements.txt
+python -m pip install -r requirements.txt; chmod +x zipzap.py
 ./zipzap.py --help
 ```
