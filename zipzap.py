@@ -46,7 +46,8 @@ def crackCompFile(tarRar, tarMode, tarDict=None, tarStr=None):
                         print_debug("Attempting passwd: '{0}'..".format(combo))
                         rar.setpassword(combo)
                         if len(rar.namelist()) > 0:
-                            print_success("Password Found => " + str(combo)); sys.exit(0)
+                            print_success("Password Found => " + str(combo))
+                            with open('found.txt', 'w') as ff: ff.write(str(combo) + "\n"); sys.exit(0)
                     except Exception: pass
             else: print_error("This archive doesn't require a password goofy")
 
