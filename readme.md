@@ -9,8 +9,12 @@ or you can supply a massive database that I've assembled from [SecLists](https:/
 ## Usage
 This project requires Python 3.6+; if you have Py2 ([which you shouldn't](https://www.python.org/doc/sunset-python-2/)) installed, you'll wanna use `python3 ...` instead of `python`.
 ```
-git clone https://github.com/synackable/ZipZap.git
-cd ZipZap/
-python -m pip install -r requirements.txt; chmod +x zipzap.py
-./zipzap.py --help
+~$ git clone https://github.com/synackable/ZipZap.git
+~$ cd ZipZap/
+~$ python -m pip install -r requirements.txt; chmod +x zipzap.py
+~$ ./zipzap.py --help
+```
+Example Usage
+```
+~$ python zipzap.py --compfile test.rar --genperm ttes321 # test all permutations of string
 ```

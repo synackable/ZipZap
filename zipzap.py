@@ -43,6 +43,7 @@ def crackCompFile(tarRar, tarMode, tarDict=None, tarStr=None):
                 for combo in itertools.permutations(tarStr):
                     try:
                         combo = ''.join(combo) # create full passwd to test
+                        print_debug("Attempting passwd: '{0}'..".format(combo))
                         rar.setpassword(combo)
                         if len(rar.namelist()) > 0:
                             print_success("Password Found => " + str(combo)); sys.exit(0)
