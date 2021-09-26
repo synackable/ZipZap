@@ -2,7 +2,7 @@
 # ZipZap - Written by @synackable | https://github.com/synackable/ZipZap
 
 
-import sys, argparse, colorama, itertools
+import os, sys, argparse, colorama, itertools
 import zipfile, rarfile
 
 argParseObj = argparse.ArgumentParser(description="ZipZap - Crack Compressed Files")
@@ -12,7 +12,8 @@ argParseObj.add_argument("--verbose", "-v", action="store_true", help="Enable ve
 argParseFunctionVARGroup = argParseObj.add_argument_group("[Attack Config]")
 argParseFunctionVARGroup.add_argument("--dictionary", "-d", required=False, help="Target dictionary to use against protected file (use 'auto' for predefined wordlist derived from SecLists")
 argParseFunctionVARGroup.add_argument("--compfile", "-rf", help="Target compressed file to crack")
-argParseFunctionVARGroup.add_argument("--genlist", "-gl", help="Generate all combinations of specified string")
+argParseFunctionVARGroup.add_argument("--genlist", "-gl", help="Generate all combinations of specified string to test against compressed file")
+argParseFunctionVARGroup.add_argument("--genperm", "-gp", help="Generate all permutations of specified string to test against compressed file")
 
 argParsedObj = argParseObj.parse_args()
 
@@ -24,14 +25,12 @@ def print_debug(string):
     if argParsedObj.verbose: print (f'{colorama.Style.BRIGHT}{colorama.Fore.MAGENTA}[#] ' + string + f'{colorama.Style.RESET_ALL}')
 
 def genPassList(tarStr):
-    print(tarStr)
     allCombos = [''.join(p) for p in itertools.permutations(tarStr)] # [''.join(l) for i in range(len(tarStr)) for l in itertools.combinations(tarStr, i+1)]
     with open('wordlist.txt', 'a') as wl:
         for combo in allCombos:
             wl.write(str(combo) + "\n")
 
-def crackRar(tarRar, tarMode, tarDict=None, tarStr=None):
-    print(tarRar)
+def crackCompFile(tarRar, tarMode, tarDict=None, tarStr=None):
     # possible attack modes (tarMode) = dict, genperm, geniter
     if tarMode == "dict" and tarDict != None:
         for pw in tarDict:
@@ -39,10 +38,16 @@ def crackRar(tarRar, tarMode, tarDict=None, tarStr=None):
                 rar.extractall(pwd=pw)
     
     elif tarMode == "genperm" and tarStr != None:
-        print_info("Generating all possible permutations of {0}".format(tarStr))
-        with open('wordlist.txt', 'a') as wl: 
-            for combo in itertools.permutations(tarStr):
-                wl.write(str(''.join(combo)) + "\n")
+        with rarfile.RarFile(tarRar) as rar:
+            if rar.needs_password:
+                for combo in itertools.permutations(tarStr):
+                    try:
+                        combo = ''.join(combo) # create full passwd to test
+                        rar.setpassword(combo)
+                        if len(rar.namelist()) > 0:
+                            print_success("Password Found => " + str(combo)); sys.exit(0)
+                    except Exception: pass
+            else: print_error("This archive doesn't require a password goofy")
 
     elif tarMode == "geniter" and tarStr != None:
         print_info("Generating all possible iterations of {0}".format(tarStr))
@@ -52,11 +57,13 @@ def crackRar(tarRar, tarMode, tarDict=None, tarStr=None):
 
 if __name__ == '__main__':
     print_success("Welcome to ZipZap | Written by @synackable")
-    if argParsedObj.genlist != None:
-        genPassList(argParsedObj.genlist)
-    
-    if argParsedObj.compfile != None:
-        print_info("Preparing to crack {0}..".format(argParsedObj.compfile))
-    else: print_error("Please define a compressed file to crack by appending '--compfile <file>'")
 
-    # if argParsedObj.rarfile != None: crackRar(argParsedObj.rarfile, argParsedObj.dictionary)
+    if argParsedObj.compfile != None:
+        if os.path.isfile(argParsedObj.compfile):
+            print_info("Preparing to crack {0}..".format(argParsedObj.compfile)); print_debug("Compressed File Type: {0}".format(argParsedObj.compfile.split('.')[-1]))
+            if argParsedObj.genperm != None:
+                print_info("Generating all permutations of '{0}' to test against {1}..".format(argParsedObj.genperm, argParsedObj.compfile))
+                crackCompFile(argParsedObj.compfile, 'genperm', tarStr=argParsedObj.genperm)
+
+        else: print_error("Unfortunately {0} does not appear to exist. Please define a readable file".format(argParsedObj.compfile))
+    else: print_error("Please define a compressed file to crack by appending '--compfile <file>'")
